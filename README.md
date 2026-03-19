@@ -42,15 +42,28 @@ AI-агент на базе [Claude Code](https://docs.anthropic.com/en/docs/cla
 
 > **macOS / Windows:** не поддерживается. zapret2 использует nfqws (Linux netfilter). На macOS есть ограниченная поддержка через tpws, на Windows — через WinDivert, но этот агент их не реализует.
 
-## Быстрый старт
+## Установка
 
+**Быстрый старт:**
 ```bash
 git clone https://github.com/howdeploy/Zapret2agent.git
 cd Zapret2agent
 claude
 ```
 
+**Через install.sh:**
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/howdeploy/Zapret2agent/main/install.sh)
+```
+
+**Глобальная регистрация скиллов** (Claude Code управляет zapret из любой папки):
+```bash
+bash install.sh --global
+```
+
 Агент поприветствует тебя и предложит меню. Скажи что нужно — установить, настроить или починить.
+
+> Совместим с [Codex CLI](https://github.com/openai/codex) — читает `AGENTS.md`.
 
 ## Как это работает
 
@@ -137,15 +150,28 @@ No need to know what DPI, nfqws, or iptables are — the agent explains each ste
 
 > **macOS / Windows:** not supported. zapret2 uses nfqws (Linux netfilter). macOS has limited support via tpws, Windows via WinDivert, but this agent does not implement them.
 
-## Quick start
+## Installation
 
+**Quick start:**
 ```bash
 git clone https://github.com/howdeploy/Zapret2agent.git
 cd Zapret2agent
 claude
 ```
 
+**Via install.sh:**
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/howdeploy/Zapret2agent/main/install.sh)
+```
+
+**Global skill registration** (Claude Code manages zapret from any directory):
+```bash
+bash install.sh --global
+```
+
 The agent will greet you and offer a menu. Tell it what you need — install, configure, or troubleshoot.
+
+> Compatible with [Codex CLI](https://github.com/openai/codex) — reads `AGENTS.md`.
 
 ## How it works
 

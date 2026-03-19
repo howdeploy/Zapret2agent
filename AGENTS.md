@@ -2,7 +2,7 @@
 
 ## Purpose
 
-AI agent for configuring DPI bypass on Linux via [zapret2](https://github.com/bol-van/zapret). Agents should treat this file as the canonical integration contract for both Claude Code and Codex.
+AI agent for configuring DPI bypass on Linux via [zapret2](https://github.com/bol-van/zapret2). Agents should treat this file as the canonical integration contract for both Claude Code and Codex.
 
 **Platform:** Linux only (Ubuntu, Fedora, Arch, Manjaro). Uses nfqws (Linux netfilter) — does not work on macOS or Windows.
 

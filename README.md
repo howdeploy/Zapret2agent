@@ -12,7 +12,7 @@
 
 # zapret2agent
 
-AI-агент на базе [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) для настройки обхода DPI-блокировок через [zapret2](https://github.com/bol-van/zapret).
+AI-агент на базе [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) для настройки обхода DPI-блокировок через [zapret2](https://github.com/bol-van/zapret2).
 
 ## Что это
 
@@ -111,7 +111,7 @@ sudo /opt/zapret2/uninstall_easy.sh
 
 ## Ссылки
 
-- zapret2: https://github.com/bol-van/zapret
+- zapret2: https://github.com/bol-van/zapret2
 - Claude Code: https://docs.anthropic.com/en/docs/claude-code/overview
 
 ---
@@ -120,7 +120,7 @@ sudo /opt/zapret2/uninstall_easy.sh
 
 # zapret2agent
 
-AI agent powered by [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) for configuring DPI bypass via [zapret2](https://github.com/bol-van/zapret).
+AI agent powered by [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) for configuring DPI bypass via [zapret2](https://github.com/bol-van/zapret2).
 
 ## What is this
 
@@ -219,7 +219,7 @@ sudo /opt/zapret2/uninstall_easy.sh
 
 ## Links
 
-- zapret2: https://github.com/bol-van/zapret
+- zapret2: https://github.com/bol-van/zapret2
 - Claude Code: https://docs.anthropic.com/en/docs/claude-code/overview
 
 ---

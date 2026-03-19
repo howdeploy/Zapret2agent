@@ -1,0 +1,82 @@
+# YouTube
+youtube.com
+googlevideo.com
+ytimg.com
+yt3.ggpht.com
+youtu.be
+youtube-nocookie.com
+youtubei.googleapis.com
+yt.be
+
+# Discord
+discord.com
+discord.gg
+discordapp.com
+discord.media
+discordapp.net
+gateway.discord.gg
+
+# WhatsApp
+whatsapp.com
+whatsapp.net
+wa.me
+
+# Telegram
+telegram.org
+t.me
+telesco.pe
+telegram.me
+web.telegram.org
+
+# Instagram
+instagram.com
+cdninstagram.com
+
+# Facebook
+facebook.com
+fbcdn.net
+fb.com
+facebook.net
+fbsbx.com
+
+# X / Twitter
+twitter.com
+x.com
+twimg.com
+t.co
+abs.twimg.com
+
+# Signal
+signal.org
+signal.group
+
+# Viber
+viber.com
+viber.media
+
+# Snapchat
+snapchat.com
+snap.com
+sc-cdn.net
+
+# LinkedIn
+linkedin.com
+licdn.com
+
+# Media
+bbc.com
+bbc.co.uk
+dw.com
+rferl.org
+svoboda.org
+meduza.io
+theins.ru
+
+# Dev
+github.com
+docker.com
+docker.io
+npmjs.com
+pypi.org
+hub.docker.com
+registry.npmjs.org

@@ -1,0 +1,29 @@
+# Planning artifacts (private)
+.planning/
+
+# Test run artifacts (private)
+test-run-*/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor artifacts
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.log.bak
+
+# Claude Code local config (belt-and-suspenders, already globally gitignored)
+.claude/settings.local.json

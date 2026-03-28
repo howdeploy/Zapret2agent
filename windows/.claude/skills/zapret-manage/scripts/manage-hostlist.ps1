@@ -14,7 +14,7 @@ param(
     [string]$SeedPath = ""
 )
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 $HostlistPath = "C:\zapret\zapret-winws\files\user-hostlist.txt"
 $HostlistDir  = Split-Path $HostlistPath -Parent
@@ -29,8 +29,13 @@ if (-not (Test-Path $HostlistPath)) {
 function Normalize-Domain($d) {
     $d = $d.Trim().ToLower()
     $d = $d -replace '^https?://', ''
-    $d = $d -replace '/$', ''
+    $d = $d -replace '/.*$', ''
     $d = $d -replace '^www\.', ''
+    # Validate: must be a valid domain name (no path traversal, no special chars)
+    if ($d -and $d -notmatch '^[a-z0-9]([a-z0-9\-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9\-]*[a-z0-9])?)*$') {
+        return $null
+    }
+    if ($d.Length -gt 253) { return $null }
     return $d
 }
 

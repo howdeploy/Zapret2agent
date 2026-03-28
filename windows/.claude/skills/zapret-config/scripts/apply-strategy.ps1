@@ -8,12 +8,18 @@ param(
     [string]$WinArgs
 )
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 $ConfigPath  = "C:\zapret\config\zapret.conf"
 $ConfigDir   = "C:\zapret\config"
 $ServiceName = "winws2"
 $errors      = @()
+
+# Security: validate winws2 args contain no shell metacharacters
+function Test-SafeWinwsArgs([string]$args_str) {
+    $dangerous = '[&|><;%\^!`\$\(\)\{\}]'
+    return -not ($args_str -match $dangerous)
+}
 
 try {
     # Validate args
@@ -21,14 +27,16 @@ try {
         throw "winws2 args cannot be empty"
     }
 
+    if (-not (Test-SafeWinwsArgs $WinArgs)) {
+        throw "SECURITY: args contain dangerous characters (& | > < ; % ^ !). Refusing to apply. Check input for tampering."
+    }
+
     # Ensure config dir exists
     New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null
 
-    # Write new config atomically (write to temp, then move)
+    # Write new config atomically (write to temp, then move — Move-Item -Force replaces target)
     $tempPath = "$ConfigPath.tmp"
     $WinArgs.Trim() | Set-Content $tempPath -Encoding UTF8
-
-    if (Test-Path $ConfigPath) { Remove-Item $ConfigPath -Force }
     Move-Item $tempPath $ConfigPath -Force
 
     # Stop service
@@ -44,7 +52,7 @@ try {
     $createScript = [System.IO.Path]::GetFullPath($createScript)
 
     if (Test-Path $createScript) {
-        $createResult = & powershell -ExecutionPolicy Bypass -File $createScript | ConvertFrom-Json
+        $createResult = & $createScript | ConvertFrom-Json
         $serviceStarted = $createResult.started
         if (-not $serviceStarted -and $createResult.errors) {
             $errors += $createResult.errors
@@ -54,7 +62,7 @@ try {
         Start-Service -Name $ServiceName -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 2
         $svc2 = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-        $serviceStarted = ($svc2 -and $svc2.Status -eq "Running")
+        $serviceStarted = ($null -ne $svc2 -and $svc2.Status -eq "Running")
         if (-not $serviceStarted) {
             $errors += "service_not_started: service did not start after applying strategy"
         }

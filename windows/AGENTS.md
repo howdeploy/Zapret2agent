@@ -19,7 +19,7 @@ Get-Service winws2 -ErrorAction SilentlyContinue  # PowerShell service check
 Get-Content C:\zapret\config\zapret.conf           # current config
 Get-Content C:\zapret\config\mode.txt              # current mode
 Get-NetAdapter | Select Name,Status,InterfaceDescription  # network adapters
-(Get-WmiObject Win32_OperatingSystem).Caption      # OS version
+(Get-CimInstance Win32_OperatingSystem).Caption     # OS version
 [System.Environment]::Is64BitOperatingSystem       # arch check
 ```
 

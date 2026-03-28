@@ -2,6 +2,7 @@
 # Post-installation verification. Checks all components are in place.
 # Output: JSON { success, checks: { name, ok, detail }[], errors[] }
 
+# Use SilentlyContinue here: verification script where missing components are expected
 $ErrorActionPreference = "SilentlyContinue"
 
 $InstallDir = "C:\zapret"
@@ -36,7 +37,7 @@ Add-Check "config_file" $confExists `
 
 # 5. Service exists
 $svc = Get-Service -Name "winws2" -ErrorAction SilentlyContinue
-Add-Check "service_exists" ($svc -ne $null) `
+Add-Check "service_exists" ($null -ne $svc) `
     (if ($svc) { "exists, status: $($svc.Status)" } else { "winws2 service not found" })
 
 # 6. Service running

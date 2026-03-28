@@ -38,10 +38,13 @@ switch ($Action) {
 
         $triggerTime = (Get-Date).AddMinutes($Minutes)
 
-        # Action: stop the winws2 service
+        # Action: restore config from backup, then restart service
+        # Uses PowerShell to: 1) restore backup, 2) stop service, 3) start with restored config
+        $backupScript = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "zapret-config\scripts\backup-config.ps1"
+        $restoreCmd = "try { & '$backupScript' -Action restore | Out-Null } catch {}; sc.exe stop winws2; Start-Sleep 2; sc.exe start winws2"
         $taskAction = New-ScheduledTaskAction `
-            -Execute "sc.exe" `
-            -Argument "stop winws2"
+            -Execute "powershell.exe" `
+            -Argument "-NoProfile -ExecutionPolicy Bypass -Command `"$restoreCmd`""
 
         $trigger = New-ScheduledTaskTrigger `
             -Once `

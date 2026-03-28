@@ -12,7 +12,7 @@ param(
     [string]$Action = "status"
 )
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 $ServiceName = "winws2"
 $LogPath     = "C:\zapret\logs\winws2.log"
 
@@ -45,7 +45,7 @@ switch ($Action) {
         }
 
         if ($state -eq "running") {
-            $proc = Get-WmiObject Win32_Service -Filter "Name='$ServiceName'" -ErrorAction SilentlyContinue
+            $proc = Get-CimInstance Win32_Service -Filter "Name='$ServiceName'" -ErrorAction SilentlyContinue
             if ($proc) { $result["pid"] = $proc.ProcessId }
         }
 

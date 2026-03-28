@@ -2,11 +2,11 @@
 # Quick aggregated health summary. Calls detect-state.ps1 internally.
 # Output: JSON with overall_status and list of issues.
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Run full diagnostics
-$stateJson = & powershell -ExecutionPolicy Bypass -File "$scriptDir\detect-state.ps1"
+# Run full diagnostics (call directly, no need for child process)
+$stateJson = & "$scriptDir\detect-state.ps1"
 $state = $stateJson | ConvertFrom-Json
 
 $issues  = @()
@@ -60,7 +60,7 @@ if ($state.antivirus.Count -gt 0) {
 if ($state.dns_hijacked) {
     # DNS hijacking IS critical - zapret won't bypass DNS-blocked sites without DNS fix
     $issues += "dns_hijacked: ISP is hijacking DNS for blocked sites - zapret alone won't help, DNS fix required"
-    if ($overall -eq "healthy") { $overall = "degraded" }
+    $overall = "error"
 }
 
 # Build result

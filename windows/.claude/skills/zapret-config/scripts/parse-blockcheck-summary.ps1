@@ -8,7 +8,7 @@ param(
     [string]$LogPath
 )
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 if (-not (Test-Path $LogPath)) {
     @{
@@ -20,7 +20,7 @@ if (-not (Test-Path $LogPath)) {
     return
 }
 
-$lines = Get-Content $LogPath -ErrorAction SilentlyContinue
+$lines = Get-Content $LogPath -ErrorAction Stop
 if (-not $lines -or $lines.Count -eq 0) {
     @{
         strategies        = @()

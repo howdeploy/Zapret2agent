@@ -2,6 +2,8 @@
 # Outputs JSON with full Windows system state for zapret agent.
 # No side effects. Safe to run without confirmation.
 
+# Use SilentlyContinue here: this is a read-only diagnostic script
+# where partial data is acceptable and expected (services may not exist, etc.)
 $ErrorActionPreference = "SilentlyContinue"
 
 function Get-IsAdmin {
@@ -12,10 +14,16 @@ function Get-IsAdmin {
 
 function Get-Arch {
     if ([System.Environment]::Is64BitOperatingSystem) {
-        $cpu = (Get-WmiObject Win32_Processor | Select-Object -First 1).Architecture
-        # 12 = ARM64
-        if ($cpu -eq 12) { return "arm64" }
-        return "x64"
+        try {
+            $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+            if ($arch -eq [System.Runtime.InteropServices.Architecture]::Arm64) { return "arm64" }
+            return "x64"
+        } catch {
+            # Fallback for older .NET
+            $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Architecture
+            if ($cpu -eq 12) { return "arm64" }
+            return "x64"
+        }
     }
     return "x86"
 }
@@ -58,21 +66,32 @@ function Get-VpnInfo {
 }
 
 function Get-DnsHijacked {
-    # Compare resolution of a known blocked domain via system DNS vs Google 8.8.8.8
-    # If results have no overlap, ISP is hijacking DNS for this domain
-    try {
-        $testDomain = "rutracker.org"
-        $sysResult    = Resolve-DnsName $testDomain -Type A -ErrorAction Stop
-        $googleResult = Resolve-DnsName $testDomain -Type A -Server "8.8.8.8" -ErrorAction Stop
+    # Compare resolution of known blocked domains via system DNS vs Google 8.8.8.8
+    # Use 2-of-3 threshold to reduce false positives from CDN geolocation differences
+    $testDomains = @("youtube.com", "rutracker.org", "telegram.org")
+    $hijackCount = 0
+    $testCount   = 0
 
-        $sysIPs    = @($sysResult    | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress)
-        $googleIPs = @($googleResult | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress)
+    foreach ($testDomain in $testDomains) {
+        try {
+            $sysResult    = Resolve-DnsName $testDomain -Type A -ErrorAction Stop
+            $googleResult = Resolve-DnsName $testDomain -Type A -Server "8.8.8.8" -ErrorAction Stop
 
-        if ($sysIPs.Count -gt 0 -and $googleIPs.Count -gt 0) {
-            $overlap = $sysIPs | Where-Object { $googleIPs -contains $_ }
-            if ($overlap.Count -eq 0) { return $true }
+            $sysIPs    = @($sysResult    | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress)
+            $googleIPs = @($googleResult | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress)
+
+            if ($sysIPs.Count -gt 0 -and $googleIPs.Count -gt 0) {
+                $testCount++
+                $overlap = $sysIPs | Where-Object { $googleIPs -contains $_ }
+                if ($overlap.Count -eq 0) { $hijackCount++ }
+            }
+        } catch {
+            # 8.8.8.8 may be blocked by ISP — skip this domain
         }
-    } catch {}
+    }
+
+    # Need at least 2 mismatches out of tested domains
+    if ($testCount -ge 2 -and $hijackCount -ge 2) { return $true }
     return $false
 }
 
@@ -89,7 +108,7 @@ function Get-ActiveAdapter {
 function Get-AntivirusProducts {
     $avList = @()
     try {
-        $avProducts = Get-WmiObject -Namespace "root\SecurityCenter2" -Class "AntiVirusProduct" -ErrorAction Stop
+        $avProducts = Get-CimInstance -Namespace "root\SecurityCenter2" -ClassName "AntiVirusProduct" -ErrorAction Stop
         foreach ($av in $avProducts) {
             $avList += $av.displayName
         }
@@ -126,7 +145,7 @@ $configExists  = (Test-Path $configPath)
 $currentConfig = if ($configExists) { (Get-Content $configPath -Raw).Trim() } else { $null }
 $currentMode   = if (Test-Path $modePath) { (Get-Content $modePath -Raw).Trim() } else { "unknown" }
 
-$os = (Get-WmiObject Win32_OperatingSystem)
+$os = (Get-CimInstance Win32_OperatingSystem)
 $osCaption  = $os.Caption
 $osVersion  = $os.Version
 $psVersion  = "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"

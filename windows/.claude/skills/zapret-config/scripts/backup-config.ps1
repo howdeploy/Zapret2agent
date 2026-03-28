@@ -12,7 +12,7 @@ param(
     [string]$Action = "backup"
 )
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 $ConfigPath  = "C:\zapret\config\zapret.conf"
 $BackupDir   = "C:\zapret\backups"
@@ -48,10 +48,16 @@ switch ($Action) {
     }
 
     "restore" {
-        $backups = Get-ChildItem "$BackupDir\zapret.conf.*" | Sort-Object LastWriteTime -Descending
-        if ($backups.Count -eq 0) {
+        $backups = Get-ChildItem "$BackupDir\zapret.conf.*" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
+        if (-not $backups -or $backups.Count -eq 0) {
             @{ success = $false; backup_path = $null; errors = @("No backups found in $BackupDir") } | ConvertTo-Json
             return
+        }
+
+        # Safety: backup current (possibly broken) config before restoring
+        if (Test-Path $ConfigPath) {
+            $preRestorePath = "$BackupDir\zapret.conf.pre-restore"
+            Copy-Item $ConfigPath $preRestorePath -Force -ErrorAction SilentlyContinue
         }
 
         $latest = $backups[0]

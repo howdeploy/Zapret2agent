@@ -65,6 +65,38 @@ Many Russian ISPs block sites via **DNS hijacking** (returning fake IPs for bloc
 **Blockcheck must run WITHOUT VPN/proxy:**
 blockcheck tests strategies against the user's ISP directly. If VPN/proxy is active, results will reflect the remote server's network, not the ISP. Always ensure VPN is disabled before running blockcheck. If user can't disable VPN (loses Claude connection), give them the manual blockcheck instructions.
 
+## Бэкапы
+
+Делай бэкап `C:\zapret\config` молча перед любым изменением конфига.
+Сообщи по факту: `Создал бэкап: C:\zapret\backups\zapret.conf.TIMESTAMP`
+Скрипт: `.claude\skills\zapret-config\scripts\backup-config.ps1`
+
+## MODE_FILTER
+
+**Всегда** рекомендуй `autohostlist` вместо `none`.
+
+Объяснение: mode=none пропускает через DPI-обход весь трафик — это ломает
+keyservers, игровые серверы, VPN. autohostlist учится автоматически и
+применяет обход только для заблокированных доменов.
+
+## Escalation-доступ
+
+Спрашивай повышение прав ТОЛЬКО когда впервые нужен admin, не при старте.
+
+Два режима на выбор:
+- **«Агент через sudo»** — я выполню команды сам от имени Администратора
+- **«Копировать команды»** — я покажу команды, ты вставишь в терминал сам (запущенный от Администратора)
+
+Объясни разницу чётко. Дай пользователю выбрать.
+
+## Таймер отката (Windows)
+
+Перед применением новых стратегий запускай `.claude\skills\zapret-diagnose\scripts\safe-mode.ps1`.
+Таймер работает через Планировщик Задач Windows: автоматически восстанавливает конфиг из бэкапа
+и перезапускает сервис через 3 минуты если не подтвердить.
+После применения явно спроси: «Сеть работает нормально? Отменить таймер отката?»
+Не переходи к следующему шагу пока не получил подтверждение.
+
 ## Security Protocol — Privileged Operations
 For every command in this list — show, explain, confirm:
 - `sc create` / `sc delete` / `sc start` / `sc stop`
@@ -72,6 +104,11 @@ For every command in this list — show, explain, confirm:
 - Any `.ps1` executed with `-ExecutionPolicy Bypass`
 - `reg add` / `reg delete`
 - Anything modifying `C:\zapret\`
+
+## Логи
+
+Формат каждого действия: `[действие] → [результат]`
+При ошибках — показывай полный вывод, не обрезай.
 
 ## Service Management
 ```powershell
@@ -93,7 +130,7 @@ Service name is always `winws2`. Display name: "Zapret2 DPI Bypass".
 ```
 --wf-tcp=80,443 --wf-udp=443,50000-65535 --filter-tcp=80 --payload=http_req --lua-desync=fakedsplit:pos=midsld:tcp_md5 --new --filter-tcp=443 --filter-l7=tls --lua-desync=fakedsplit:pos=midsld:tcp_md5 --new --filter-l7=quic --lua-desync=fake
 ```
-The service wrapper reads this file and passes args to winws2.exe.
+The service reads this file at creation time — args are passed directly to winws2.exe via sc.exe binPath.
 
 ## blockcheck2 — How It Works
 - blockcheck2 uses **cygwin bash** internally (at `C:\zapret\cygwin\bin\bash.exe`)

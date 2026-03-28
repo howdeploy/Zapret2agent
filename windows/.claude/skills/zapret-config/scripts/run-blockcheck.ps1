@@ -3,7 +3,7 @@
 # Must run as Administrator. All blockcheck prompts use defaults (non-interactive).
 # Output: JSON { finished, log_path, exit_code, errors[] }
 
-$ErrorActionPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 $CygwinBash  = "C:\zapret\cygwin\bin\bash.exe"
 $BlogScript  = "C:\zapret\blockcheck\zapret2\blog.sh"

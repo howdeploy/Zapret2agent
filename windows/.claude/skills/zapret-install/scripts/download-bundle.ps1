@@ -5,6 +5,9 @@
 
 $ErrorActionPreference = "Stop"
 
+# Enforce TLS 1.2+ (PS 5.1 defaults to TLS 1.0 which GitHub rejects)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 $InstallDir = "C:\zapret"
 $TempDir    = "$env:TEMP\zapret-install"
 $ZipPath    = "$TempDir\zapret-win-bundle.zip"
@@ -18,7 +21,14 @@ try {
 
     # Get latest release info
     $releaseUrl = "https://api.github.com/repos/bol-van/zapret-win-bundle/releases/latest"
-    $release = Invoke-RestMethod -Uri $releaseUrl -UseBasicParsing -TimeoutSec 30
+    try {
+        $release = Invoke-RestMethod -Uri $releaseUrl -UseBasicParsing -TimeoutSec 30
+    } catch {
+        if ($_.Exception.Response.StatusCode -eq 403) {
+            throw "GitHub API rate limit exceeded. Wait a few minutes and try again, or use a VPN."
+        }
+        throw
+    }
 
     $version = $release.tag_name
 
@@ -26,16 +36,24 @@ try {
     $asset = $release.assets | Where-Object { $_.name -match "\.zip$" } | Select-Object -First 1
 
     if (-not $asset) {
-        # Fallback: use source zip
-        $downloadUrl = "https://github.com/bol-van/zapret-win-bundle/archive/refs/heads/master.zip"
-        $version = "master"
-    } else {
-        $downloadUrl = $asset.browser_download_url
+        throw "No .zip asset found in release $version. Check https://github.com/bol-van/zapret-win-bundle/releases manually."
     }
 
-    # Download
+    $downloadUrl = $asset.browser_download_url
+
+    # Download with TLS 1.2
     $wc = New-Object System.Net.WebClient
     $wc.DownloadFile($downloadUrl, $ZipPath)
+
+    # Verify download integrity — check file is a valid ZIP (PK header)
+    $header = [System.IO.File]::ReadAllBytes($ZipPath)[0..1]
+    if ($header[0] -ne 0x50 -or $header[1] -ne 0x4B) {
+        throw "Downloaded file is not a valid ZIP archive. Possible network corruption or MITM. Re-download or check antivirus."
+    }
+
+    # Log SHA256 for audit trail
+    $hash = (Get-FileHash $ZipPath -Algorithm SHA256).Hash
+    $errors += "info: downloaded $($asset.name) v$version SHA256=$hash"
 
     # Stop service if running (for upgrade)
     $svc = Get-Service -Name "winws2" -ErrorAction SilentlyContinue
@@ -94,12 +112,10 @@ try {
         "direct" | Set-Content "$InstallDir\config\mode.txt" -Encoding UTF8
     }
 
-    # Cleanup temp
-    Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue
-
     $result = [ordered]@{
         success      = $true
         version      = $version
+        sha256       = $hash
         extracted_to = $InstallDir
         errors       = @()
     }
@@ -108,8 +124,14 @@ try {
     $result = [ordered]@{
         success      = $false
         version      = $version
+        sha256       = $null
         extracted_to = $null
         errors       = @($_.Exception.Message)
+    }
+} finally {
+    # Always clean up temp dir (even on failure)
+    if (Test-Path $TempDir) {
+        Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 

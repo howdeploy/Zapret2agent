@@ -2,7 +2,11 @@
 # Validates prerequisites before installing zapret-win-bundle.
 # Output: JSON { ready: bool, blockers: [], warnings: [] }
 
+# Use SilentlyContinue here: pre-flight check where missing components are expected
 $ErrorActionPreference = "SilentlyContinue"
+
+# Enforce TLS 1.2+ for GitHub API call
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
 
 $blockers = @()
 $warnings = @()
@@ -30,7 +34,11 @@ try {
         -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
     if ($resp.StatusCode -ne 200) { throw "status $($resp.StatusCode)" }
 } catch {
-    $blockers += "no_github: cannot reach GitHub ($($_.Exception.Message)) - check internet connection"
+    if ($_.Exception.Response.StatusCode -eq 403) {
+        $blockers += "github_rate_limit: GitHub API rate limit exceeded - wait a few minutes and try again"
+    } else {
+        $blockers += "no_github: cannot reach GitHub ($($_.Exception.Message)) - check internet connection"
+    }
 }
 
 # 5. Disk space (need 200 MB free on C:)
@@ -50,17 +58,33 @@ if ($existingInstall) {
     $warnings += "already_installed: zapret is already installed - will perform upgrade"
 }
 
-# 7. ARM64 check
-$cpu = (Get-WmiObject Win32_Processor | Select-Object -First 1).Architecture
-if ($cpu -eq 12) {
-    # ARM64 - check if test signing is enabled
+# 7. ARM64 check (use RuntimeInformation with WMI fallback)
+$isArm64 = $false
+try {
+    $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+    $isArm64 = ($arch -eq [System.Runtime.InteropServices.Architecture]::Arm64)
+} catch {
+    $cpu = (Get-CimInstance Win32_Processor | Select-Object -First 1).Architecture
+    $isArm64 = ($cpu -eq 12)
+}
+if ($isArm64) {
+    # ARM64 - check if test signing is enabled via registry (locale-independent)
     try {
-        $bcdedit = & bcdedit /enum "{current}" 2>$null
-        if ($bcdedit -notmatch "testsigning\s+Yes") {
+        $bcdStore = "HKLM:\BCD00000000\Objects\{fa926493-6f1c-4193-a414-58f0b2456d1e}\Elements\16000049"
+        $tsValue = (Get-ItemProperty -Path $bcdStore -ErrorAction Stop).Element
+        if ($tsValue -ne 1) {
             $blockers += "arm64_no_testsign: ARM64 requires test-signing mode. Run: bcdedit /set testsigning on - then reboot"
         }
     } catch {
-        $warnings += "arm64_testsign_check_failed: could not verify testsigning status"
+        # Fallback: try bcdedit with locale-independent check
+        try {
+            $bcdedit = & bcdedit /enum "{current}" 2>$null
+            if ($bcdedit -notmatch "testsigning\s+(Yes|Да)") {
+                $blockers += "arm64_no_testsign: ARM64 requires test-signing mode. Run: bcdedit /set testsigning on - then reboot"
+            }
+        } catch {
+            $warnings += "arm64_testsign_check_failed: could not verify testsigning status"
+        }
     }
 }
 

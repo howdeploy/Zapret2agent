@@ -37,7 +37,7 @@ AI-агент для настройки обхода блокировок на W
 
 Или через git:
 ```powershell
-git clone https://github.com/howdeploy/zapret2agent-windows
+git clone https://github.com/howdeploy/Zapret2agent
 ```
 
 **3. Запусти установщик** — открой PowerShell **от имени Администратора** в папке репозитория:

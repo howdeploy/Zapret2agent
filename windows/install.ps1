@@ -83,10 +83,28 @@ if ($Global) {
         Write-OK "Skill installed: $skillName"
     }
 
-    # Copy CLAUDE.md so agent instructions are available globally
+    # Copy CLAUDE.md — backup existing if present, never overwrite silently
     $claudeMdDest = "$env:USERPROFILE\.claude\CLAUDE.md"
-    Copy-Item "$RepoDir\CLAUDE.md" $claudeMdDest -Force
-    Write-OK "CLAUDE.md installed to ~/.claude/"
+    if (Test-Path $claudeMdDest) {
+        $backupPath = "$env:USERPROFILE\.claude\CLAUDE.md.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        Copy-Item $claudeMdDest $backupPath -Force
+        Write-INFO "Existing CLAUDE.md backed up to: $backupPath"
+
+        # Append zapret instructions instead of overwriting
+        $marker = "# --- Zapret2agent Windows ---"
+        $existing = Get-Content $claudeMdDest -Raw -Encoding UTF8
+        if ($existing -notmatch [regex]::Escape($marker)) {
+            $zapretContent = Get-Content "$RepoDir\CLAUDE.md" -Raw -Encoding UTF8
+            $appendContent = "`n`n$marker`n$zapretContent"
+            [System.IO.File]::AppendAllText($claudeMdDest, $appendContent, [System.Text.Encoding]::UTF8)
+            Write-OK "Zapret2agent instructions appended to existing CLAUDE.md"
+        } else {
+            Write-OK "Zapret2agent section already present in CLAUDE.md"
+        }
+    } else {
+        Copy-Item "$RepoDir\CLAUDE.md" $claudeMdDest -Force
+        Write-OK "CLAUDE.md installed to ~/.claude/"
+    }
 
     Write-HEAD "Done (global install)"
     Write-Color "`nSkills available from any directory." "Green"

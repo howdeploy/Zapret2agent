@@ -1,0 +1,40 @@
+# Zapret2agent Windows — seed domain list
+# Popular sites that may be blocked in Russia
+# One domain per line, no www, no http
+
+# Video
+youtube.com
+youtu.be
+
+# Messengers
+telegram.org
+t.me
+
+# Social
+instagram.com
+facebook.com
+twitter.com
+x.com
+linkedin.com
+
+# Communication
+discord.com
+discordapp.com
+
+# Dev / Tech
+github.com
+stackoverflow.com
+npmjs.com
+pypi.org
+hub.docker.com
+registry.npmjs.org
+
+# Media
+bbc.com
+meduza.io
+theinsider.media
+
+# Other frequently blocked
+canva.com
+notion.so
+figma.com
